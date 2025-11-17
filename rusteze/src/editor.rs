@@ -1,54 +1,42 @@
 use crossterm::event::{read, Event, Event::Key, KeyCode::Char, KeyEvent, KeyModifiers};
-use crossterm::execute;
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType};
-use std::io::stdout;
+mod terminal;
+use terminal::Terminal;
 
 pub struct Editor {
     exit_token: bool,
 }
 
 impl Editor {
-    pub fn default() -> Self {
-        Editor {exit_token: false}
+    pub const fn default() -> Self {
+        Self {exit_token: false}
     }
 
     pub fn run(&mut self) {
-        Self::initialize().unwrap();
+        Terminal::initialize().unwrap();
         let result = self.repl();
-        Self::terminate().unwrap();
+        Terminal::terminate().unwrap();
         result.unwrap();
-    }
-
-    fn initialize() -> Result<(), std::io::Error> {
-        enable_raw_mode()?;
-        Self::clear_shell()
-    }
-
-    fn terminate() -> Result<(), std::io::Error> {
-        disable_raw_mode()
-    }
-
-    fn clear_shell() -> Result<(), std::io::Error> {
-        let mut stdout = stdout();
-        execute!(stdout, Clear(ClearType::All))
     }
 
     fn refresh_shell(&self) -> Result<(), std::io::Error> {
         if self.exit_token {
-            Self::clear_shell()?;
+            Terminal::clear_shell()?;
             println!("Kachow.\r");
+        } else {
+            Self::draw_tildes()?;
+            Terminal::move_cursor_to(0, 0)?;
         }
         Ok(())
     }
 
     fn repl(&mut self) -> Result<(), std::io::Error> {
         loop {
-            let event = read()?;
-            self.evaluate_event(&event);
             self.refresh_shell()?;
             if self.exit_token {
                 break;
             }
+            let event = read()?;
+            self.evaluate_event(&event);
         }
         Ok(())
     }
@@ -64,5 +52,16 @@ impl Editor {
                 _ => (),
             }
         }
+    }
+
+    fn draw_tildes() -> Result<(), std::io::Error> {
+        let height = Terminal::get_size()?.1;
+        for cur in 0..height {
+            print!("~");
+            if cur + 1 < height {
+                print!("\r\n");
+            }
+        }
+        Ok(())
     }
 }
