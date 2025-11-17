@@ -1,6 +1,7 @@
 use crossterm::event::{read, Event, Event::Key, KeyCode::Char, KeyEvent, KeyModifiers};
+use std::io::Error;
 mod terminal;
-use terminal::Terminal;
+use terminal::{Terminal, Size, Position};
 
 pub struct Editor {
     exit_token: bool,
@@ -18,18 +19,21 @@ impl Editor {
         result.unwrap();
     }
 
-    fn refresh_shell(&self) -> Result<(), std::io::Error> {
+    fn refresh_shell(&self) -> Result<(), Error> {
+        Terminal::hide_cursor()?;
         if self.exit_token {
             Terminal::clear_shell()?;
-            println!("Kachow.\r");
+            Terminal::print("Kachow.\r\n")?;
         } else {
             Self::draw_tildes()?;
-            Terminal::move_cursor_to(0, 0)?;
+            Terminal::move_cursor_to(Position{x:0, y:0})?;
         }
+        Terminal::show_cursor()?;
+        Terminal::execute()?;
         Ok(())
     }
 
-    fn repl(&mut self) -> Result<(), std::io::Error> {
+    fn repl(&mut self) -> Result<(), Error> {
         loop {
             self.refresh_shell()?;
             if self.exit_token {
@@ -54,12 +58,13 @@ impl Editor {
         }
     }
 
-    fn draw_tildes() -> Result<(), std::io::Error> {
-        let height = Terminal::get_size()?.1;
+    fn draw_tildes() -> Result<(), Error> {
+        let Size{height, ..} = Terminal::get_size()?;
         for cur in 0..height {
-            print!("~");
+            Terminal::clear_line()?;
+            Terminal::print("~")?;
             if cur + 1 < height {
-                print!("\r\n");
+                Terminal::print("\r\n")?;
             }
         }
         Ok(())
