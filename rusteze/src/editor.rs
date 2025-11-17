@@ -3,6 +3,9 @@ use std::io::Error;
 mod terminal;
 use terminal::{Terminal, Size, Position};
 
+const NAME: &str = env!("CARGO_PKG_NAME");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 pub struct Editor {
     exit_token: bool,
 }
@@ -26,7 +29,7 @@ impl Editor {
             Terminal::print("Kachow.\r\n")?;
         } else {
             Self::draw_tildes()?;
-            Terminal::move_cursor_to(Position{x:0, y:0})?;
+            Terminal::move_cursor_to(Position{x: 0, y: 0})?;
         }
         Terminal::show_cursor()?;
         Terminal::execute()?;
@@ -58,12 +61,36 @@ impl Editor {
         }
     }
 
+    fn output_welcome() -> Result<(), Error> {
+        let mut message = format!("{NAME} editor -- version {VERSION}");
+        let width = Terminal::get_size()?.width;
+        let length = message.len();
+
+        #[allow(clippy::integer_division)]
+        let padding = (width - length) / 2;
+
+        let spaces = " ".repeat(padding - 1);
+        message = format!("~{spaces}{message}");
+        message.truncate(width);
+        Terminal::print(message)?;
+        Ok(())
+    }
+
+    fn draw_empty_row() -> Result<(), Error> {
+        Terminal::print("~")?;
+        Ok(())
+    }
+
     fn draw_tildes() -> Result<(), Error> {
         let Size{height, ..} = Terminal::get_size()?;
         for cur in 0..height {
             Terminal::clear_line()?;
-            Terminal::print("~")?;
-            if cur + 1 < height {
+            if cur == height / 3 {
+                Self::output_welcome()?;
+            } else {
+                Self::draw_empty_row()?;
+            }
+            if cur.saturating_add(1) < height {
                 Terminal::print("\r\n")?;
             }
         }
