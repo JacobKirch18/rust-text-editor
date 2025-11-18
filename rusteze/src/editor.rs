@@ -77,10 +77,25 @@ impl Editor {
                 y = min(height.saturating_sub(1), y.saturating_add(1));
             }
             KeyCode::Left => {
-                x = x.saturating_sub(1);
+                if x == 0 && y == 0 {
+                    // do nothing (top right corner, statement included for clarity)
+                }
+                else if x == 0 {
+                    x = width.saturating_sub(1);
+                    y = y.saturating_sub(1);
+                } else {
+                    x = x.saturating_sub(1);
+                }
             }
             KeyCode::Right => {
-                x = min(width.saturating_sub(1), x.saturating_add(1));
+                if x == width.saturating_sub(1) && y == height.saturating_sub(1) {
+                    // do nothing (bottom right corner, statement including for clarity)
+                } else if x == width.saturating_sub(1) {
+                    x = 0;
+                    y = min(height.saturating_sub(1), y.saturating_add(1));
+                } else {
+                    x = x.saturating_add(1);
+                }
             }
             KeyCode::PageUp => {
                 y = 0;
