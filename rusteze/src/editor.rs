@@ -23,6 +23,7 @@ struct Location {
 pub struct Editor {
     exit_token: bool,
     loc: Location,
+    view: View,
 }
 
 impl Editor {
@@ -41,7 +42,7 @@ impl Editor {
             Terminal::clear_shell()?;
             Terminal::print("Kachow.\r\n")?;
         } else {
-            View::render()?;
+            self.view.render()?;
             Terminal::move_caret_to(Position {
                 col: self.loc.x, 
                 row: self.loc.y,
